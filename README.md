@@ -38,7 +38,7 @@ The goal of this project is to generate realistic images from textual descriptio
   Implements the `Text2ImageDataset` class, a PyTorch `Dataset` that loads the HDF5 file and provides the necessary data (images, text embeddings, and captions) for training.  
 
 - **`eval.py`**  
-  Provides an evaluation script that loads the trained generator model, obtains a text embedding using a pre-trained BERT model (with a projection layer to match dimensions), and generates an image from an input text description.  
+  Provides an evaluation script that loads the trained generator model, obtains a text embedding using a pre-trained CLIP model (with a projection layer to match dimensions), and generates an image from an input text description.  
 
 - **`eval_testdata.py`**  
   Evaluates the model by loading a precomputed embedding from the HDF5 dataset (using the test split) and generates an image based on that embedding.  
@@ -47,12 +47,12 @@ The goal of this project is to generate realistic images from textual descriptio
 
 ## Data Preparation
 
-  The dataset ideally needs three things here. Raw Images, Text Descriptions of the images (bird in the images), vector embeddings of the text (which we be pretrained). Now these are available in different datasources which we can download and unify them using the scripts I have modified them from ( `config.yaml`, `convert_cub_to_hd5_script.py`) this reference. If any of this dataset official links (given below) are unavailable in future you can try [this](https://drive.google.com/drive/folders/1fVryE2GC96X57GC6LJfR0kWLvjpHQE-T?usp=drive_link) where I have the necessary data for our project stored.
+  The dataset ideally needs three things here. Raw Images, Text Descriptions of the images (bird in the images), vector embeddings of the text (which are pretrained). Now these are available in different datasources which we can download and unify them using the scripts I have modified them from ( `config.yaml`, `convert_cub_to_hd5_script.py`) this [reference](https://github.com/aelnouby/Text-to-Image-Synthesis). If any of this dataset official links (given below) are unavailable in future you can try [this](https://drive.google.com/drive/folders/1fVryE2GC96X57GC6LJfR0kWLvjpHQE-T?usp=drive_link) where I have stored the above original datasets.
 
 1. **Download the CUB Dataset:**  
    - Download the CUB birds dataset. The CUB-200-2011 dataset is widely used in many reasearch papers which can be found [here](https://data.caltech.edu/records/65de6-vp158)
    - Download the cub_icml dataset which contains the train,val, test splits and text descriptions from [here](https://drive.google.com/file/d/0B0ywwgffWnLLLUc2WHYzM0Q2eWc/view?resourcekey=0-z04QWSQJKUaPaZoy8NarOQ)
-   - Download the cvpr_2016 dataset that contains the numerical embeddings of the text from a pretrained model from [here](https://drive.google.com/file/d/0B0ywwgffWnLLZW9uVHNjb2JmNlE/view?resourcekey=0-8y2UVmBHAlG26HafWYNoFQ). This is referenced from this project
+   - Download the cvpr_2016 dataset that contains the numerical embeddings of the text from a pretrained model from [here](https://drive.google.com/file/d/0B0ywwgffWnLLZW9uVHNjb2JmNlE/view?resourcekey=0-8y2UVmBHAlG26HafWYNoFQ) which is referenced from [this](https://github.com/reedscot/icml2016) project
     
 
 3. **Configuration:**  
@@ -101,13 +101,13 @@ The GAN model is implemented in `Text_to_Image_GAN.py`. Key steps include:
 
 2. **Model:**  
    - **Generator (`G`):** Takes a noise vector concatenated with processed text embeddings (via a linear layer followed by batch normalization and LeakyReLU) and produces an image through a series of transposed convolutions.
-   - **Input:** Concatenation of a noise vector (shape `[100, 1, 1]`) and processed text embedding.
-   - **Architecture:** Series of transposed convolution layers with batch normalization and ReLU activations. Final layer uses Tanh activation to output image values in the range \([-1, 1]\).
+     - **Input:** Concatenation of a noise vector (shape `[100, 1, 1]`) and processed text embedding.
+     - **Architecture:** Series of transposed convolution layers with batch normalization and ReLU activations. Final layer uses Tanh activation to output image values in the range \([-1, 1]\).
      
    - **Discriminator (`D`):** Processes an input image through several convolutional layers and checks its consistency with the provided text embedding.
-   - **Input:** An image and its corresponding text embedding.
-   - **Architecture:** Convolutional layers process the image while a parallel text embedding layer processes the input text. The outputs are concatenated and passed through additional convolutional layers followed by a Sigmoid layer for binary classification.
-
+     - **Input:** An image and its corresponding text embedding.
+     - **Architecture:** Convolutional layers process the image while a parallel text embedding layer processes the input text. The outputs are concatenated and passed through additional convolutional layers followed by a Sigmoid layer for binary classification.
+  
 3. **Loss Functions:**  
    Training uses Binary Cross-Entropy (BCE) for classification along with L1 (pixel-wise) and L2 (feature-wise) losses to improve image clarity and feature consistency.
 
@@ -152,7 +152,7 @@ During the training the text-to-image GAN for **200 epochs**, we generate a comb
 
 This 8-image grid clearly demonstrates the model's ability to capture the overall structure and color patterns of real bird images. Although the generated images still lag behind in sharpness and fine details, the improvements over time are evident.
 
-![Combined Real and Generated Images](./results/combined_grid.png)
+![Combined Real and Generated Images](./images/output_epoch_150.png)
 
 *Note: The above grid is organized with the top row showing real images and the bottom row showing generated images.*
 
@@ -179,7 +179,7 @@ Monitoring the progress of the generator during training reveals significant imp
 
 | Epoch 1 | Epoch 50 | Epoch 100 | Epoch 150 | Epoch 200 |
 |---------|---------|-----------|-----------|-----------|
-| ![Epoch 1](./results/fake_samples_epoch_000.png) | ![Epoch 50](./results/fake_samples_epoch_049.png) | ![Epoch 100](./results/fake_samples_epoch_099.png) | ![Epoch 150](./results/fake_samples_epoch_149.png) | ![Epoch 200](./results/fake_samples_epoch_199.png) |
+| ![Epoch 1](./results/images/output_epoch_001.png) | ![Epoch 50](./results/images/output_epoch_050.png) | ![Epoch 100](./results/images/output_epoch_100.png) | ![Epoch 150](./results/images/output_epoch_150.png) | ![Epoch 200](./images/output_epoch_200.png) |
 
 - **Epoch 1:**  
   The very first epoch produces images that are largely unstructured and dominated by noise. At this early stage, the generator has just begun to learn basic features.
