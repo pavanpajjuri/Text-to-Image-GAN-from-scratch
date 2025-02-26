@@ -2,7 +2,7 @@
 
 This repository contains a PyTorch implementation of a Text-to-Image Generative Adversarial Network (GAN). The model is designed to generate images from textual descriptions, leveraging a combination of text embeddings and noise vectors to produce realistic images. The project is particularly focused on generating bird images based on textual descriptions, using the CUB (Caltech-UCSD Birds-200-2011) dataset. The implementation of the project is influenced from [this](https://arxiv.org/abs/1605.05396) paper and built on top of my other [project](https://github.com/pavanpajjuri/GAN_from_scratch) where I implemented GAN from scratch
 
-![Model Architecture](./images/model_architecture.png)
+![Model Architecture](./images/pipeline.png)
 
 ## Table of Contents
 
