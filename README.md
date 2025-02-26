@@ -14,6 +14,7 @@ This repository contains a PyTorch implementation of a Text-to-Image Generative 
 - [Evaluation](#evaluation)
 - [Results](#results)
 - [Future Work](#improvements-and-future-work)
+- [References](#references)
 
 ---
 
@@ -152,7 +153,7 @@ During the training the text-to-image GAN for **200 epochs**, we generate a comb
 
 This 8-image grid clearly demonstrates the model's ability to capture the overall structure and color patterns of real bird images. Although the generated images still lag behind in sharpness and fine details, the improvements over time are evident.
 
-![Combined Real and Generated Images](./images/output_epoch_150.png)
+![Combined Real and Generated Images](./images/output_epoch_200.png)
 
 *Note: The above grid is organized with the top row showing real images and the bottom row showing generated images.*
 
@@ -179,7 +180,7 @@ Monitoring the progress of the generator during training reveals significant imp
 
 | Epoch 1 | Epoch 50 | Epoch 100 | Epoch 150 | Epoch 200 |
 |---------|---------|-----------|-----------|-----------|
-| ![Epoch 1](./results/images/output_epoch_001.png) | ![Epoch 50](./results/images/output_epoch_050.png) | ![Epoch 100](./results/images/output_epoch_100.png) | ![Epoch 150](./results/images/output_epoch_150.png) | ![Epoch 200](./images/output_epoch_200.png) |
+| ![Epoch 1](./images/output_epoch_001.png) | ![Epoch 50](./images/output_epoch_050.png) | ![Epoch 100](./images/output_epoch_100.png) | ![Epoch 150](./images/output_epoch_150.png) | ![Epoch 200](./images/output_epoch_200.png) |
 
 - **Epoch 1:**  
   The very first epoch produces images that are largely unstructured and dominated by noise. At this early stage, the generator has just begun to learn basic features.
@@ -204,5 +205,14 @@ Monitoring the progress of the generator during training reveals significant imp
 - **Text Processing:** Incorporate more advanced text embedding techniques or fine-tune the text encoder for the bird domain.
 - **Dataset Expansion:** Extend the pipeline to support other datasets and more diverse image generation tasks.
 - **Resources:** Currently limited with CUDA resources in trying out hyperparameters and epochs for better generation of images
+
+
+## References
+```
+ Resources:
+- [Text-to-Image Synthesis by aelnouby](https://github.com/aelnouby/Text-to-Image-Synthesis)
+- [ICML 2016 Code by reedscot](https://github.com/reedscot/icml2016)
+- [Generative Adversarial Text-to-Image Synthesis on arXiv](https://arxiv.org/abs/1605.05396)
+```
 
 
