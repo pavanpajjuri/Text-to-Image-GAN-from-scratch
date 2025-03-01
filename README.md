@@ -157,21 +157,23 @@ This 8-image grid clearly demonstrates the model's ability to capture the overal
 
 *Note: The above grid is organized with the top row showing real images and the bottom row showing generated images.*
 
+### Loss plot
+During training we see that the loss plot slightly increases at the initial epochs but then slowly settles down and stagnates. Although its settling down we see that there is a wide gap between discriminator loss and generator loss. Generator loss doesn't go well below 30 with the given parameters we are running the script. We could infer that the discriminator is being very harsh on the generator and hence the loss is high or the generator is learning very slow (tried with 300 epochs too but still stagnates) or both. So we can either decrease the learning rate of Optimizer for Discriminator or increase the learning rate of generator for better reduction in Generator loss.
+
+![Loss Plot](./images/loss_plot.png)
 
 ### Evaluation Metrics
 
 To quantitatively assess the performance of our model after 200 epochs, we computed several key evaluation metrics:
 
 - **Inception Score (IS):**  
-  Evaluates both the quality and diversity of the generated images. Our model achieved an IS of **X.XX**, indicating that the generated images contain meaningful objects and maintain diversity.
+  Evaluates both the quality and diversity of the generated images. Our model achieved an IS of **4.2**, indicating that the generated images contain meaningful objects and maintain diversity.
 
 - **Fréchet Inception Distance (FID):**  
-  Measures the similarity between the feature distributions of real and generated images. With an FID of **XX.XX**, the model shows a moderate resemblance to the true data distribution. A lower FID would suggest better alignment with real images.
+  Measures the similarity between the feature distributions of real and generated images. With an FID of **121.27**, the model shows a moderate resemblance to the true data distribution. A lower FID would suggest better alignment with real images.
 
 - **CLIP Score:**  
-  Assesses the semantic alignment between the generated images and their corresponding text descriptions. Our model obtained a CLIP score of **XX.XX**, indicating that the visual outputs generally correspond well to the input text descriptions.
-
-*Note: Replace the placeholder values with your actual metric results.*
+  Assesses the semantic alignment between the generated images and their corresponding text descriptions. Our model obtained a CLIP score of **0.47**, indicating that the visual outputs generally correspond well to the input text descriptions.
 
 
 ### Training Progress Visualization
