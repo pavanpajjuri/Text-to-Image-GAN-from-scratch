@@ -199,6 +199,12 @@ Monitoring the progress of the generator during training reveals significant imp
 - **Epoch 200:**  
   The final images at 200 epochs exhibit significant enhancement in both visual quality and detail, though there remains some gap compared to the real images.
 
+### Training Progress Visualization
+
+Taking the test split from the same dataset and the pre encoded embeddings in it below is the set of generated images. The prompt is added on the image
+
+![Generated Image](./images/generated_image.png) 
+
 --- 
 
 ## Improvements and Future Work
