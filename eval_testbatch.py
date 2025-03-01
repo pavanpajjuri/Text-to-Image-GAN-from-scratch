@@ -1,48 +1,16 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Enhanced Evaluation Script with IS, FID, CLIP Similarity, and Grid Visualization
-
-You can change the number of images to evaluate by modifying the `num_images` variable.
-"""
-
 import torch
 import numpy as np
 from PIL import Image
-import h5py  # For loading the CUB dataset
-from Text_to_Image_GAN import G  # Your generator model
+import h5py
+from Text_to_Image_GAN import G
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
 import matplotlib.pyplot as plt
 import textwrap
-
-# Import evaluation metrics
+import io
 from torchmetrics.image.inception import InceptionScore
 from torchmetrics.image.fid import FrechetInceptionDistance
-import clip  # OpenAI's CLIP for text-image similarity
-
-# Set the number of images to evaluate (change this value as needed)
-num_images = 100
-
-# Load the trained generator model
-device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
-netG = G().to(device)
-netG.load_state_dict(torch.load('./saved_models/generator_epoch_199.pth', map_location=device))
-netG.eval()  # Set model to evaluation mode
-
-# Load CLIP model
-clip_model, clip_preprocess = clip.load("ViT-B/32", device=device)
-
-# Define transforms for evaluation (for IS & FID, images are converted to uint8)
-image_transform = transforms.Compose([
-    transforms.Resize((299, 299)),  # Required for Inception Score & FID
-    transforms.ToTensor(),
-    transforms.Lambda(lambda x: (x * 255).to(torch.uint8))  # Convert to uint8 for FID & IS
-])
-
-# Initialize IS and FID metrics (running on CPU)
-inception_metric = InceptionScore().to("cpu")
-fid_metric = FrechetInceptionDistance().to("cpu")
+import clip
 
 
 def load_embedding(dataset_path, split='test', index=0):
@@ -67,6 +35,16 @@ def load_embedding(dataset_path, split='test', index=0):
 
         return embedding, text
 
+def load_real_image(dataset_path, split, index):
+    """
+    Load a real image from the CUB dataset.
+    """
+    with h5py.File(dataset_path, 'r') as f:
+        example_name = list(f[split].keys())[index]
+        example = f[split][example_name]
+        img_bytes = bytes(np.array(example['img']))
+        img = Image.open(io.BytesIO(img_bytes)).resize((64, 64))
+        return img
 
 def generate_image(embedding):
     """
@@ -84,7 +62,6 @@ def generate_image(embedding):
     fake_image = (fake_image * 255).astype(np.uint8)
 
     return Image.fromarray(fake_image)
-
 
 def compute_clip_similarity(images, texts):
     """
@@ -104,8 +81,7 @@ def compute_clip_similarity(images, texts):
     similarity = (image_features * text_features).sum(dim=-1)  # Cosine similarity
     return similarity.mean().item()
 
-
-def batch_eval(dataset_path, split='test', num_samples=num_images):
+def batch_eval(dataset_path, split='test', num_samples=100):
     """
     Evaluate the model on a batch of test samples, computing IS, FID, and CLIP similarity.
     Also displays the generated images in a grid with text annotations.
@@ -123,13 +99,11 @@ def batch_eval(dataset_path, split='test', num_samples=num_images):
     for idx in indices:
         embedding, text = load_embedding(dataset_path, split, idx)
         generated_image = generate_image(embedding)
-
-        # Apply transforms for evaluation (needed for IS & FID)
-        generated_tensor = image_transform(generated_image).cpu()
-
-        # Store images and texts
         generated_images.append(generated_image)
-        real_images.append(generated_tensor)  # Here, we assume the evaluation uses generated images for metrics
+        
+        # Apply image_transform to real image, which converts it into a tensor
+        real_image_tensor = image_transform(load_real_image(dataset_path, split, idx))
+        real_images.append(real_image_tensor.cpu())
 
         # Safely extract text description
         if isinstance(text, np.ndarray):
@@ -143,13 +117,17 @@ def batch_eval(dataset_path, split='test', num_samples=num_images):
             texts.append("Unknown Description")
 
     # Compute Inception Score (IS)
-    real_images_tensor = torch.stack(real_images)
-    is_score = inception_metric(real_images_tensor)
+    generated_images_tensor = torch.stack([image_transform(img) for img in generated_images])
+    generated_images_tensor = (generated_images_tensor * 255).to(torch.uint8)  # Convert to uint8
+
+    is_score = inception_metric(generated_images_tensor)
     is_mean, is_std = is_score  # Extract mean and standard deviation
 
-    # Compute FID (here we compare generated images to themselves as a placeholder)
+    # Compute FID
+    real_images_tensor = torch.stack(real_images)
+    real_images_tensor = (real_images_tensor * 255).to(torch.uint8)  # Convert to uint8
     fid_metric.update(real_images_tensor, real=True)
-    fid_metric.update(real_images_tensor, real=False)  # In practice, use real images vs. generated images
+    fid_metric.update(generated_images_tensor, real=False)
     fid_score = fid_metric.compute()
 
     # Compute CLIP Similarity Score
@@ -159,17 +137,15 @@ def batch_eval(dataset_path, split='test', num_samples=num_images):
     print(f"Fréchet Inception Distance (FID): {fid_score:.4f}")
     print(f"CLIP Similarity Score: {clip_score:.4f}")
 
-
     # Determine grid dimensions
     cols = int(np.ceil(np.sqrt(num_samples)))
     rows = int(np.ceil(num_samples / cols))
-
 
     # Plot the grid with annotations
     fig, axes = plt.subplots(rows, cols, figsize=(cols * 3, rows * 3))
     axes = axes.flatten() if num_samples > 1 else [axes]
     for i, ax in enumerate(axes):
-        if i < num_images:
+        if i < num_samples:
             ax.imshow(generated_images[i])
             # Wrap text to avoid overly long titles
             caption = textwrap.fill(texts[i], width=20)
@@ -180,19 +156,29 @@ def batch_eval(dataset_path, split='test', num_samples=num_images):
     plt.subplots_adjust(wspace=0.1, hspace=0.1)
     plt.show()
 
-    '''
-    for i in range(rows * cols):
-        ax = axes[i]
-        if i < num_samples:
-            ax.imshow(np.array(generated_images[i]))
-            # Wrap text to avoid long titles
-            caption = textwrap.fill(texts[i], width=20)
-            ax.set_title(caption, fontsize=8)
-        ax.axis("off")
-    plt.tight_layout()
-    plt.show()
-    '''
+# Set the number of images to evaluate (change this value as needed)
+num_images = 25
 
+# Load the trained generator model
+device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
+netG = G().to(device)
+netG.load_state_dict(torch.load('./saved_models/generator_final_500.pth', map_location=device))
+#netG.load_state_dict(torch.load('./saved_models/generator_epoch_199.pth', map_location=device))
+
+netG.eval()  # Set model to evaluation mode
+
+# Load CLIP model
+clip_model, clip_preprocess = clip.load("ViT-B/32", device=device)
+
+# Define transforms for evaluation (for IS & FID, images are converted to uint8)
+image_transform = transforms.Compose([
+    transforms.Resize((299, 299)),  # Required for Inception Score & FID
+    transforms.ToTensor()  # Converts image to [0, 1] tensor
+])
+
+# Initialize IS and FID metrics (running on CPU)
+inception_metric = InceptionScore().to("cpu")
+fid_metric = FrechetInceptionDistance().to("cpu")
 
 # Example usage
 dataset_path = 'data/birds.hdf5'
